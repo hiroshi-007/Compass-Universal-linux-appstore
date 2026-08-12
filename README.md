@@ -17,6 +17,7 @@ Whether you're using Debian, Ubuntu, Fedora, Arch, openSUSE, Alpine, or another 
 * 🏠 **Home page** — discover applications through categories and featured content
 * 📱 **Installed applications** — view software installed through the supported sources
 * 🐧 **Linux-focused** — built specifically around the way Linux software is distributed
+* **De-bloater** - can uninstall unnecessary apps and libraries if required
 
 ## 📦 Supported Sources
 
@@ -71,7 +72,7 @@ It currently detects several common package-management systems automatically, in
 | APK            | ✅       |
 | XBPS           | ✅       |
 | Flatpak        | ✅       |
-| Snap           | ✅       |
+| Snap           | ❌       |  Will be Under Development...
 
 Compatibility can vary depending on the distribution, desktop environment, installed dependencies, and package configuration.
 
