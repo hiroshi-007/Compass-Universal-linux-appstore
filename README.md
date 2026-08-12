@@ -9,7 +9,7 @@ Whether you're using Debian, Ubuntu, Fedora, Arch, openSUSE, Alpine, or another 
 ## ✨ Features
 
 * 🌍 **Distro-independent** — designed to work across many Linux distributions
-* 📦 **Multiple package sources** — supports native system package managers alongside Flatpak and Snap when available
+* 📦 **Multiple package sources** — supports native system package managers alongside Flatpak when available
 * 🔎 **Unified app search** — search across available software sources from one place
 * 🧩 **Source-aware installation** — Compass can use the appropriate package source available on your system
 * 💾 **Caching** — package information is cached locally to make repeated searches faster
@@ -32,7 +32,6 @@ Compass is designed to bring multiple Linux software ecosystems together, includ
   * APK
   * XBPS
 * **Flatpak**
-* **Snap**
 
 The available sources depend on what is installed and supported by your Linux system.
 
