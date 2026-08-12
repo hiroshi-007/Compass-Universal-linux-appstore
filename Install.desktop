@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Install Compass
+Comment=Graphical installer for Compass app store
+Exec=bash -c 'cd "$(dirname "$1")" && bash install-gui.sh' _ %k
+Icon=compass
+Terminal=false
+Type=Application
+Categories=System;

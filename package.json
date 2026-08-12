@@ -1,0 +1,12 @@
+{
+  "name": "compass",
+  "version": "2.5.1",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron main.js"
+  },
+  "dependencies": {
+    "electron": "^28.0.0",
+    "sudo-prompt": "^9.2.1"
+  }
+}

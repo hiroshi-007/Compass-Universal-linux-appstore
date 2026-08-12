@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compass</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+html { background:transparent; }
+body { background:#171717; color:#f2f2f2; font-family:'Segoe UI',system-ui,sans-serif; overflow:hidden; height:100vh; border-radius:12px; transition:border-radius 0.15s ease; }
+body.maximized { border-radius:0; }
+::-webkit-scrollbar { width:8px; height:8px; }
+::-webkit-scrollbar-thumb { background:#3a3a3a; border-radius:4px; }
+::-webkit-scrollbar-thumb:hover { background:#4a4a4a; }
+
+@keyframes fadeInUp { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+@keyframes pulseDot { 0% { box-shadow:0 0 0 0 rgba(0,120,212,0.55); } 70% { box-shadow:0 0 0 7px rgba(0,120,212,0); } 100% { box-shadow:0 0 0 0 rgba(0,120,212,0); } }
+@keyframes shimmer { 0% { background-position:-120px 0; } 100% { background-position:220px 0; } }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+#topbar { background:#111; height:48px; display:flex; align-items:center; padding:0 12px; gap:16px; -webkit-app-region:drag; border-bottom:1px solid #262626; }
+#topbar .brand { display:flex; align-items:center; gap:8px; font-size:14px; color:#ddd; font-weight:600; white-space:nowrap; }
+#topbar .brand .app-logo { width:20px; height:20px; border-radius:50%; object-fit:cover; }
+#searchwrap { flex:1; max-width:560px; margin:0 auto; -webkit-app-region:no-drag; position:relative; }
+#searchwrap svg { position:absolute; left:12px; top:50%; transform:translateY(-50%); opacity:0.5; }
+#search { width:100%; padding:9px 14px 9px 36px; background:#242424; border:1px solid #333; border-radius:6px; color:white; font-size:13px; outline:none; transition:border-color 0.12s ease, background 0.12s ease; }
+#search:focus { border-color:#0078d4; background:#1e1e1e; }
+#winctrls { display:flex; gap:2px; -webkit-app-region:no-drag; }
+#winctrls button { background:none; border:none; color:#999; width:40px; height:32px; cursor:pointer; font-size:14px; border-radius:4px; transition:background 0.1s ease; }
+#winctrls button:hover { background:#2a2a2a; }
+#winctrls #close:hover { background:#e74c3c !important; color:white !important; }
+
+#app { display:flex; height:calc(100vh - 48px); }
+#rail { width:76px; background:#1c1c1c; padding:16px 0; display:flex; flex-direction:column; align-items:center; gap:6px; border-right:1px solid #262626; flex-shrink:0; }
+.rail-btn { position:relative; width:60px; padding:10px 4px 8px; background:none; border:none; color:#999; cursor:pointer; border-radius:8px; display:flex; flex-direction:column; align-items:center; gap:4px; font-size:10px; transition:background 0.12s ease, color 0.12s ease; }
+.rail-btn svg { width:22px; height:22px; transition:stroke 0.12s ease; }
+.rail-btn:hover { background:#262626; color:#ddd; }
+.rail-btn.active { background:#0078d422; color:#4da6ff; }
+.rail-btn.active svg { stroke:#4da6ff; }
+.rail-dot { position:absolute; top:6px; right:12px; width:8px; height:8px; border-radius:50%; background:#0078d4; animation:pulseDot 1.7s infinite; }
+
+#main { flex:1; overflow-y:auto; padding:24px 32px 48px; scroll-behavior:smooth; }
+#warning { display:none; background:#f39c1222; border:1px solid #f39c12; color:#f39c12; padding:10px 14px; border-radius:8px; margin-bottom:16px; font-size:13px; animation:fadeIn 0.3s ease; }
+#status { color:#888; margin-bottom:14px; font-size:13px; }
+.section-title { font-size:19px; font-weight:600; margin:28px 0 14px; display:flex; align-items:center; justify-content:space-between; }
+.section-title:first-child { margin-top:0; }
+.section-sub { font-size:12px; color:#888; font-weight:400; }
+
+#hero { position:relative; height:280px; border-radius:12px; overflow:hidden; background:#222; margin-bottom:8px; }
+.hero-slide { position:absolute; inset:0; background-size:cover; background-position:center; opacity:0; transition:opacity 0.7s ease; }
+.hero-slide.active { opacity:1; }
+.hero-slide::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(10,10,10,0.92) 0%, rgba(10,10,10,0.55) 45%, rgba(10,10,10,0.15) 100%); }
+.hero-content { position:relative; z-index:1; height:100%; display:flex; flex-direction:column; justify-content:center; padding:0 40px; max-width:520px; }
+.hero-content h2 { font-size:30px; margin-bottom:10px; }
+.hero-content p { font-size:14px; color:#ddd; margin-bottom:18px; line-height:1.5; }
+.hero-dots { position:absolute; bottom:14px; left:0; right:0; display:flex; justify-content:center; gap:6px; z-index:2; }
+.hero-dots span { width:7px; height:7px; border-radius:50%; background:#ffffff55; cursor:pointer; transition:background 0.2s ease, transform 0.2s ease; }
+.hero-dots span.active { background:#fff; transform:scale(1.2); }
+.hero-nav { position:absolute; top:50%; transform:translateY(-50%); z-index:2; background:#00000055; border:none; color:white; width:34px; height:34px; border-radius:50%; cursor:pointer; font-size:16px; transition:background 0.2s ease; }
+.hero-nav:hover { background:#00000088; }
+#hero-prev { left:12px; } #hero-next { right:12px; }
+
+.row-scroll { display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; scroll-behavior:smooth; }
+.tile { flex:0 0 150px; cursor:pointer; opacity:0; animation:fadeInUp 0.22s ease both; transition:transform 0.12s ease; }
+.tile:hover { transform:translateY(-4px); }
+.tile-icon { width:72px; height:72px; border-radius:16px; margin:0 auto 8px; display:flex; align-items:center; justify-content:center; font-size:26px; font-weight:700; color:white; overflow:hidden; background:#333; }
+.tile-icon img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.25s ease; }
+.tile-icon img.loaded { opacity:1; }
+.tile-name { font-size:12.5px; text-align:center; color:#eee; line-height:1.3; }
+.tile-cat { font-size:10.5px; text-align:center; color:#888; margin-top:2px; }
+
+.banner-row { display:flex; gap:14px; overflow-x:auto; padding-bottom:10px; scroll-behavior:smooth; }
+.banner-card {
+  flex:0 0 280px; cursor:pointer; position:relative; display:flex; gap:14px; align-items:center;
+  padding:16px; border-radius:14px; border:1px solid #ffffff14;
+  opacity:0; animation:fadeInUp 0.25s ease both;
+  transition:transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.banner-card:hover { transform:translateY(-4px); box-shadow:0 12px 28px rgba(0,0,0,0.4); border-color:#ffffff30; }
+.banner-ribbon { position:absolute; top:10px; right:12px; font-size:9.5px; text-transform:uppercase; letter-spacing:0.04em; color:#fff; background:#0078d4; padding:2px 8px; border-radius:8px; opacity:0.9; }
+.banner-icon { width:56px; height:56px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:20px; font-weight:700; color:white; overflow:hidden; background:#333; }
+.banner-icon img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.25s ease; }
+.banner-icon img.loaded { opacity:1; }
+.banner-info { min-width:0; }
+.banner-name { font-size:14px; font-weight:600; color:#f2f2f2; margin-bottom:2px; }
+.banner-cat { font-size:10.5px; color:#999; margin-bottom:4px; }
+.banner-blurb { font-size:11.5px; color:#bbb; line-height:1.35; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+
+#results { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:12px; }
+.card { background:#212121; border:1px solid #2c2c2c; border-radius:10px; padding:16px; cursor:pointer; opacity:0; animation:fadeInUp 0.2s ease both; transition:border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease; }
+.card:hover { border-color:#0078d4; transform:translateY(-3px); box-shadow:0 10px 26px rgba(0,0,0,0.35); }
+.card-top { display:flex; gap:12px; margin-bottom:10px; }
+.card-icon { width:44px; height:44px; border-radius:10px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:700; color:white; overflow:hidden; background:#333; }
+.card-icon img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.25s ease; }
+.card-icon img.loaded { opacity:1; }
+.card h3 { font-size:14.5px; margin-bottom:4px; }
+.badge { font-size:10px; padding:2px 8px; border-radius:10px; text-transform:uppercase; display:inline-block; }
+.system { background:#c0392b33; color:#e74c3c; }
+.flatpak { background:#0078d433; color:#4da6ff; }
+.snap { background:#e67e2233; color:#f0a050; }
+.card p { color:#999; font-size:12px; margin-bottom:12px; line-height:1.4; max-height:32px; overflow:hidden; }
+.actions button { padding:8px 18px; border:none; border-radius:20px; cursor:pointer; font-weight:500; font-size:13px; margin-right:6px; }
+.uninstall { background:#c0392b33; color:#e74c3c; }
+.purge { background:#f39c1233; color:#f39c12; }
+
+.install {
+  display:inline-flex; align-items:center; gap:6px;
+  background:linear-gradient(135deg,#0087e6,#0067b8); color:white;
+  box-shadow:0 2px 6px rgba(0,120,212,0.35);
+  transition:transform 0.1s ease, box-shadow 0.12s ease, background 0.12s ease, opacity 0.12s ease;
+}
+.install:hover:not(:disabled) { transform:translateY(-1px); box-shadow:0 5px 14px rgba(0,120,212,0.5); }
+.install.status-done { background:linear-gradient(135deg,#33a852,#27ae60); cursor:default; opacity:0.95; }
+.install.status-open { background:linear-gradient(135deg,#33a852,#27ae60); }
+.install.status-retry { background:linear-gradient(135deg,#e6822f,#d35400); }
+
+.install-progress { display:flex; flex-direction:column; gap:5px; min-width:150px; }
+.ip-label { font-size:11px; color:#aaa; display:flex; justify-content:space-between; }
+.progress-track { background:#333; border-radius:6px; height:6px; overflow:hidden; }
+.progress-fill { background:linear-gradient(90deg,#0078d4,#4da6ff); height:100%; border-radius:6px; width:0%; transition:width 0.25s ease; }
+.progress-fill.animated { animation:shimmer 1.1s linear infinite; }
+
+#view-downloads .dl-empty { color:#888; text-align:center; padding:60px 20px; font-size:13.5px; }
+.dl-item { display:flex; align-items:center; gap:14px; background:#212121; border:1px solid #2c2c2c; border-radius:10px; padding:14px 16px; margin-bottom:10px; opacity:0; animation:fadeInUp 0.3s ease both; }
+.dl-icon { width:40px; height:40px; border-radius:9px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:700; color:white; overflow:hidden; background:#333; }
+.dl-icon img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.35s ease; }
+.dl-icon img.loaded { opacity:1; }
+.dl-main { flex:1; min-width:0; }
+.dl-top { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:6px; gap:10px; }
+.dl-name { font-size:13.5px; font-weight:600; }
+.dl-pct { font-size:11.5px; color:#888; flex-shrink:0; }
+.dl-text { font-size:11.5px; color:#999; margin-top:5px; }
+.dl-actions button { padding:6px 14px; border:none; border-radius:16px; font-size:12px; cursor:pointer; background:#0078d4; color:white; }
+.dl-actions .open-btn { background:linear-gradient(135deg,#33a852,#27ae60); }
+
+/* Cache popup */
+#cache-overlay {
+  display:none; position:fixed; inset:0; background:#000000bb; z-index:100;
+  align-items:center; justify-content:center; opacity:0; transition:opacity 0.2s ease;
+}
+#cache-overlay.open { display:flex; opacity:1; }
+#cache-modal {
+  background:#1e1e1e; border:1px solid #333; border-radius:14px; padding:30px 40px;
+  text-align:center; max-width:400px; width:90%;
+}
+#cache-modal h3 { font-size:16px; margin-bottom:16px; }
+.cache-progress { margin-top:16px; }
+.cache-progress .progress-track { height:8px; }
+.cache-text { font-size:13px; color:#aaa; margin-top:8px; }
+
+/* Source filter chips */
+.source-filters {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.source-chip {
+  background: #2a2a2a;
+  border: 1px solid #444;
+  color: #ccc;
+  padding: 4px 14px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.source-chip:hover {
+  background: #3a3a3a;
+  color: #fff;
+}
+.source-chip.active {
+  background: #0078d4;
+  border-color: #0078d4;
+  color: white;
+}
+
+#modal-overlay { display:none; position:fixed; inset:0; background:#000000aa; z-index:50; align-items:center; justify-content:center; opacity:0; transition:opacity 0.14s ease; }
+#modal-overlay.open { display:flex; opacity:1; }
+#modal { width:640px; max-width:92vw; max-height:86vh; background:#1e1e1e; border:1px solid #333; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; transform:scale(0.96) translateY(6px); transition:transform 0.16s cubic-bezier(.2,.8,.2,1); }
+#modal-overlay.open #modal { transform:scale(1) translateY(0); }
+#modal-header { display:flex; gap:16px; padding:24px 24px 16px; align-items:flex-start; }
+#modal-icon { width:80px; height:80px; border-radius:18px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:32px; font-weight:700; color:white; overflow:hidden; background:#333; }
+#modal-icon img { width:100%; height:100%; object-fit:cover; opacity:0; transition:opacity 0.35s ease; }
+#modal-icon img.loaded { opacity:1; }
+#modal-title { flex:1; min-width:0; }
+#modal-title h2 { font-size:20px; margin-bottom:6px; }
+#modal-close { background:none; border:none; color:#999; font-size:18px; cursor:pointer; width:32px; height:32px; border-radius:6px; }
+#modal-body { padding:0 24px 24px; overflow-y:auto; }
+#modal-desc { font-size:13.5px; color:#ccc; line-height:1.6; margin-bottom:18px; white-space:pre-line; }
+#modal-shots { display:flex; gap:10px; overflow-x:auto; padding-bottom:6px; }
+#modal-shots img { height:150px; border-radius:8px; flex-shrink:0; background:#2a2a2a; opacity:0; transition:opacity 0.35s ease; }
+#modal-shots img.loaded { opacity:1; }
+
+.installed-toolbar { display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap; }
+.installed-toolbar input { flex:1; min-width:200px; padding:8px 12px; background:#242424; border:1px solid #333; border-radius:6px; color:white; font-size:13px; outline:none; }
+.installed-toolbar input:focus { border-color:#0078d4; }
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="brand"><img src="icon.svg" class="app-logo" alt="Compass"> Compass</div>
+  <div id="searchwrap">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="search" id="search" placeholder="Search apps and more">
+  </div>
+  <div id="winctrls">
+    <button id="min-btn">─</button>
+    <button id="max-btn">□</button>
+    <button id="close">✕</button>
+  </div>
+</div>
+
+<div id="app">
+  <div id="rail">
+    <button class="rail-btn active" data-tab="home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>Home
+    </button>
+    <button class="rail-btn" data-tab="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Search
+    </button>
+    <button class="rail-btn" data-tab="installed">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/></svg>Installed
+    </button>
+    <button class="rail-btn" data-tab="downloads">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>Downloads
+      <span class="rail-dot" id="rail-dot" style="display:none"></span>
+    </button>
+  </div>
+  <div id="main">
+    <div id="warning"></div>
+    <div id="view-home"></div>
+    <div id="view-search" style="display:none">
+      <div id="status">Type to search for apps</div>
+      <div class="source-filters" id="source-filters">
+        <span class="source-chip active" data-source="all">All</span>
+        <span class="source-chip" data-source="Flatpak">Flatpak</span>
+        <span class="source-chip" data-source="System">System</span>
+      </div>
+      <div id="results"></div>
+    </div>
+    <div id="view-installed" style="display:none">
+      <div class="installed-toolbar">
+        <input type="text" id="installed-search" placeholder="Filter installed packages...">
+      </div>
+      <div id="installed-status">Loading...</div>
+      <div class="section-title">Applications</div>
+      <div id="installed-apps-results"></div>
+      <div class="section-title" id="libraries-toggle" style="cursor:pointer;user-select:none;">
+        <span id="libraries-toggle-label">▸ Libraries &amp; System Packages</span>
+      </div>
+      <div id="installed-libraries-results" style="display:none"></div>
+    </div>
+    <div id="view-downloads" style="display:none">
+      <div class="section-title">Downloads<span class="section-sub" id="downloads-sub"></span></div>
+      <div id="downloads-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Cache popup -->
+<div id="cache-overlay">
+  <div id="cache-modal">
+    <h3 id="cache-title">Preparing app catalogue...</h3>
+    <div class="cache-progress">
+      <div class="progress-track"><div class="progress-fill animated" id="cache-fill" style="width:0%"></div></div>
+      <div class="cache-text" id="cache-text">Starting...</div>
+    </div>
+  </div>
+</div>
+
+<!-- App detail modal -->
+<div id="modal-overlay">
+  <div id="modal">
+    <div id="modal-header">
+      <div id="modal-icon">?</div>
+      <div id="modal-title">
+        <h2 id="modal-name"></h2>
+        <span id="modal-badge" class="badge"></span>
+        <div class="actions" id="modal-actions" data-install-id=""></div>
+      </div>
+      <button id="modal-close">✕</button>
+    </div>
+    <div id="modal-body">
+      <div id="modal-loading" style="display:none">Loading details…</div>
+      <p id="modal-desc"></p>
+      <div id="modal-shots"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATALOG = [
+  { id: 'org.mozilla.firefox', name: 'Firefox', category: 'Popular', blurb: 'Fast, private web browser.' },
+  { id: 'org.chromium.Chromium', name: 'Chromium', category: 'Popular', blurb: 'Open-source web browser.' },
+  { id: 'org.videolan.VLC', name: 'VLC Media Player', category: 'Popular', blurb: 'Plays almost any video or audio file.' },
+  { id: 'com.spotify.Client', name: 'Spotify', category: 'Popular', blurb: 'Stream music and podcasts.' },
+  { id: 'com.visualstudio.code', name: 'Visual Studio Code', category: 'Development', blurb: 'Popular free code editor.' },
+  { id: 'com.jetbrains.PyCharm-Community', name: 'PyCharm CE', category: 'Development', blurb: 'Python IDE by JetBrains.' },
+  { id: 'org.eclipse.Java', name: 'Eclipse IDE', category: 'Development', blurb: 'Java and multi-language IDE.' },
+  { id: 'io.podman_desktop.PodmanDesktop', name: 'Podman Desktop', category: 'Development', blurb: 'Manage containers with a GUI.' },
+  { id: 'org.gimp.GIMP', name: 'GIMP', category: 'Multimedia & Graphics', blurb: 'Free, powerful image editor.' },
+  { id: 'org.blender.Blender', name: 'Blender', category: 'Multimedia & Graphics', blurb: '3D creation suite.' },
+  { id: 'org.kde.kdenlive', name: 'Kdenlive', category: 'Multimedia & Graphics', blurb: 'Full-featured video editor.' },
+  { id: 'org.kde.krita', name: 'Krita', category: 'Multimedia & Graphics', blurb: 'Digital painting studio.' },
+  { id: 'org.inkscape.Inkscape', name: 'Inkscape', category: 'Multimedia & Graphics', blurb: 'Vector graphics editor.' },
+  { id: 'io.mpv.Mpv', name: 'mpv', category: 'Multimedia & Graphics', blurb: 'Minimalist, powerful video player.' },
+  { id: 'org.libreoffice.LibreOffice', name: 'LibreOffice', category: 'Productivity & Office', blurb: 'Free office suite.' },
+  { id: 'org.onlyoffice.desktopeditors', name: 'ONLYOFFICE', category: 'Productivity & Office', blurb: 'MS Office-compatible editors.' },
+  { id: 'com.github.johnfactotum.Foliate', name: 'Foliate', category: 'Productivity & Office', blurb: 'Simple e-book reader.' },
+  { id: 'com.discordapp.Discord', name: 'Discord', category: 'Communication', blurb: 'Chat, voice, and video for communities.' },
+  { id: 'org.telegram.desktop', name: 'Telegram', category: 'Communication', blurb: 'Fast, secure messaging.' },
+  { id: 'im.riot.Riot', name: 'Element', category: 'Communication', blurb: 'Secure, decentralized chat.' },
+  { id: 'com.valvesoftware.Steam', name: 'Steam', category: 'Games', blurb: 'The biggest PC game store and launcher.' },
+  { id: 'net.lutris.Lutris', name: 'Lutris', category: 'Games', blurb: 'Run and manage games from many sources.' },
+  { id: 'com.heroicgameslauncher.hgl', name: 'Heroic Games Launcher', category: 'Games', blurb: 'Open-source Epic/GOG launcher.' },
+];
+const FEATURED = ['org.mozilla.firefox', 'com.spotify.Client', 'com.valvesoftware.Steam'];
+const RELATED = {
+  'org.videolan.vlc': ['io.mpv.mpv', 'org.kde.kdenlive'],
+  'org.mozilla.firefox': ['org.chromium.chromium'],
+  'com.visualstudio.code': ['com.jetbrains.pycharm-community', 'org.eclipse.java'],
+  'org.gimp.gimp': ['org.inkscape.inkscape', 'org.kde.krita', 'org.blender.blender'],
+  'com.valvesoftware.steam': ['net.lutris.lutris', 'com.heroicgameslauncher.hgl'],
+  'com.discordapp.discord': ['org.telegram.desktop'],
+};
+
+let currentTab = 'home';
+const clientMetaCache = new Map();
+let recommendationCache = null;
+let heroInterval = null;
+
+// Cache overlay management
+const cacheOverlay = document.getElementById('cache-overlay');
+const cacheFill = document.getElementById('cache-fill');
+const cacheText = document.getElementById('cache-text');
+window.api.onCacheStatus(({ event, percent, text }) => {
+  if (event === 'started' || event === 'progress') {
+    cacheOverlay.classList.add('open');
+    cacheFill.style.width = `${percent}%`;
+    cacheText.textContent = text || '';
+    cacheFill.classList.add('animated');
+  } else if (event === 'finished') {
+    cacheFill.style.width = '100%';
+    cacheText.textContent = text || 'Ready';
+    cacheFill.classList.remove('animated');
+    setTimeout(() => {
+      cacheOverlay.classList.remove('open');
+    }, 800);
+  }
+});
+
+// ---------- Downloads state ----------
+const downloadsState = new Map();
+const downloadsOrder = [];
+function updateRailDot() {
+  document.getElementById('rail-dot').style.display =
+    [...downloadsState.values()].some(d => !d.done) ? '' : 'none';
+}
+function onDownloadUpdate(id, patch) {
+  const existing = downloadsState.get(id);
+  if (!existing) downloadsOrder.unshift(id);
+  downloadsState.set(id, { ...(existing || { startedAt: Date.now() }), ...patch });
+  updateRailDot();
+  if (currentTab === 'downloads') renderDownloads();
+  document.querySelectorAll(`[data-install-id="${cssEscape(id)}"]`).forEach(el =>
+    renderInstallControl(el, downloadsState.get(id))
+  );
+}
+function cssEscape(s) { return String(s).replace(/[^a-zA-Z0-9_-]/g, c => '\\' + c); }
+
+window.api.onInstallProgress(({ id, ...patch }) => onDownloadUpdate(id, patch));
+(async () => {
+  (await window.api.getActiveInstalls()).forEach(({ id, ...patch }) => {
+    if (!downloadsState.has(id)) downloadsOrder.unshift(id);
+    downloadsState.set(id, patch);
+  });
+  updateRailDot();
+})();
+
+document.getElementById('min-btn').addEventListener('click', () => window.api.minimize());
+document.getElementById('max-btn').addEventListener('click', () => window.api.maximize());
+document.getElementById('close').addEventListener('click', () => window.api.close());
+window.api.onMaximizedChange(m => document.body.classList.toggle('maximized', m));
+
+function escapeHtml(s) { const d = document.createElement('div'); d.textContent = s||''; return d.innerHTML; }
+
+function humanizeError(raw) {
+  if (!raw) return 'Unknown error';
+  if (/no session|not authorized|cannot determine session|Request dismissed|authentication agent/i.test(raw)) {
+    return 'No authentication prompt is available on this system. Ensure a polkit agent (like policykit-1-gnome or lxpolkit) is installed and running, then try again.';
+  }
+  return raw;
+}
+function badgeClass(src) { return src==='Flatpak'?'flatpak':src==='Snap'?'snap':'system'; }
+const AVATAR_COLORS = ['#0078d4','#8764b8','#c239b3','#ca5010','#498205','#0e7078','#e3008c','#986f0b'];
+function colorForName(n) { let h=0; for(let i=0;i<(n||'').length;i++) h=(h*31+n.charCodeAt(i))>>>0; return AVATAR_COLORS[h%AVATAR_COLORS.length]; }
+function avatarHtml(n) { const l=(n||'?').trim().charAt(0).toUpperCase(); return `<div style="background:${colorForName(n)}">${escapeHtml(l)}</div>`; }
+
+async function getMetaCached(app) {
+  const key = `${app.source}:${app.id}`;
+  if (clientMetaCache.has(key)) return clientMetaCache.get(key);
+  const meta = await window.api.getAppMeta(app);
+  clientMetaCache.set(key, meta);
+  return meta;
+}
+
+async function hydrateIcon(app, el) {
+  const meta = await getMetaCached(app);
+  if (!meta || !meta.icon) return;
+  const loadImg = (url) => {
+    const img = document.createElement('img');
+    img.alt = ''; img.loading = 'lazy'; img.style.opacity = '0';
+    img.onload = () => { img.classList.add('loaded'); img.style.opacity = ''; };
+    img.onerror = () => {
+      if (url.endsWith('.svg') && !url.startsWith('file://')) {
+        loadImg(url.replace(/\.svg$/, '.png'));
+      } else {
+        el.innerHTML = avatarHtml(app.name);
+      }
+    };
+    img.src = url;
+    el.innerHTML = '';
+    el.appendChild(img);
+  };
+  loadImg(meta.icon);
+}
+
+// ---------- Tabs ----------
+document.querySelectorAll('.rail-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    if (heroInterval) { clearInterval(heroInterval); heroInterval = null; }
+    document.querySelectorAll('.rail-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentTab = btn.dataset.tab;
+    document.getElementById('view-home').style.display = currentTab==='home'?'':'none';
+    document.getElementById('view-search').style.display = currentTab==='search'?'':'none';
+    document.getElementById('view-installed').style.display = currentTab==='installed'?'':'none';
+    document.getElementById('view-downloads').style.display = currentTab==='downloads'?'':'none';
+    if (currentTab==='home' && !document.getElementById('view-home').dataset.loaded) renderHome();
+    if (currentTab==='search') document.getElementById('search').focus();
+    if (currentTab==='installed') loadInstalled();
+    if (currentTab==='downloads') renderDownloads();
+  });
+});
+
+document.getElementById('search').addEventListener('focus', () => {
+  if (heroInterval) { clearInterval(heroInterval); heroInterval = null; }
+  document.querySelectorAll('.rail-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.rail-btn[data-tab="search"]').classList.add('active');
+  currentTab = 'search';
+  document.getElementById('view-home').style.display='none';
+  document.getElementById('view-search').style.display='';
+  document.getElementById('view-installed').style.display='none';
+  document.getElementById('view-downloads').style.display='none';
+});
+
+// ---------- Source filter state ----------
+let activeSourceFilter = 'all'; // 'all', 'Flatpak', 'System'
+document.querySelectorAll('.source-chip').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.source-chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    activeSourceFilter = chip.dataset.source;
+    if (accumulatedResults.length > 0) {
+      renderResults(accumulatedResults, 'results');
+    }
+  });
+});
+
+// ---------- Incremental search with source filter ----------
+let currentQuery = '', accumulatedResults = [], activeSources = new Set();
+const searchCache = new Map();
+
+window.api.onSearchPartial(({ source, apps, query }) => {
+  if ((query || '').toLowerCase() !== currentQuery) return;
+  const canonicalSource = source === 'flatpak' ? 'Flatpak' : source === 'snap' ? 'Snap' : 'System';
+  activeSources.delete(source);
+  accumulatedResults = accumulatedResults.filter(a => a.source !== canonicalSource)
+    .concat(apps);
+  if (activeSources.size === 0) {
+    accumulatedResults = sortResults(accumulatedResults);
+    searchCache.set(query, [...accumulatedResults]);
+  }
+  renderResults(sortResults(accumulatedResults), 'results');
+  document.getElementById('status').textContent = `Found ${accumulatedResults.length} apps${activeSources.size ? ' (loading more…)' : ''}`;
+});
+
+function sortResults(apps) {
+  const order = { 'Flatpak': 0, 'Snap': 1, 'System': 2 };
+  return apps.slice().sort((a, b) => (order[a.source] ?? 3) - (order[b.source] ?? 3));
+}
+
+let debounce;
+document.getElementById('search').addEventListener('input', e => {
+  clearTimeout(debounce);
+  const q = e.target.value.trim();
+  if (!q) { document.getElementById('status').textContent = 'Type to search for apps'; renderRecommendationsInto('results', 'Because of what you have installed'); return; }
+  if (q.length < 2) { document.getElementById('status').textContent = 'Keep typing…'; return; }
+  const cacheKey = q.toLowerCase();
+  if (searchCache.has(cacheKey)) { renderResults(searchCache.get(cacheKey), 'results'); document.getElementById('status').textContent = `Found ${searchCache.get(cacheKey).length} apps`; return; }
+  document.getElementById('status').textContent = 'Searching...';
+  debounce = setTimeout(() => {
+    currentQuery = cacheKey; activeSources = new Set(['flatpak','snap','system']); accumulatedResults = [];
+    window.api.search(q);
+  }, 300);
+});
+
+// ---------- Recommendations ----------
+async function computeRecommendations() {
+  if (recommendationCache) return recommendationCache;
+  const installed = await window.api.getInstalled();
+  const installedKeys = new Set(installed.map(a => (a.id||a.name||'').toLowerCase()));
+  const owned = CATALOG.filter(e => { const key = e.id.toLowerCase(); return installedKeys.has(key) || [...installedKeys].some(k => k.includes(key.split('.').pop())); }).map(e => e.id.toLowerCase());
+  const rec = []; for (const key of owned) for (const rel of (RELATED[key]||[])) if (!owned.includes(rel) && !rec.includes(rel)) rec.push(rel);
+  const entries = rec.map(k => CATALOG.find(e => e.id.toLowerCase()===k)).filter(Boolean).slice(0,8);
+  recommendationCache = { entries, ownedCount: owned.length }; return recommendationCache;
+}
+
+async function renderRecommendationsInto(targetId, title) {
+  const target = document.getElementById(targetId); if (!target) return;
+  const { entries } = await computeRecommendations(); target.innerHTML = '';
+  let displayEntries = entries, subTitle = 'based on your installed apps';
+  if (displayEntries.length === 0) {
+    displayEntries = ['org.mozilla.firefox','com.spotify.Client','com.valvesoftware.Steam','org.videolan.VLC','com.visualstudio.code']
+      .map(id => CATALOG.find(e=>e.id===id)).filter(Boolean);
+    title = 'Trending'; subTitle = 'popular on Flathub';
+  }
+  target.innerHTML = `<div class="section-title">${escapeHtml(title)}<span class="section-sub">${subTitle}</span></div><div class="banner-row">${displayEntries.map((e,i)=>bannerHtml(e,i)).join('')}</div>`;
+  target.querySelectorAll('.banner-card').forEach((card,i) => {
+    const entry = displayEntries[i];
+    hydrateIcon(catalogApp(entry), card.querySelector('.banner-icon'));
+    card.addEventListener('click', () => openModal(catalogApp(entry)));
+  });
+}
+
+// ---------- Home ----------
+function catalogApp(e) { return { id:e.id, name:e.name, description:e.blurb, source:'Flatpak' }; }
+function tileHtml(e,i) { return `<div class="tile" data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(i*18,140)}ms"><div class="tile-icon">${avatarHtml(e.name)}</div><div class="tile-name">${escapeHtml(e.name)}</div><div class="tile-cat">${escapeHtml(e.category)}</div></div>`; }
+function bannerHtml(e,i) { return `<div class="banner-card" data-id="${escapeHtml(e.id)}" style="animation-delay:${Math.min(i*20,140)}ms; background:linear-gradient(135deg,${colorForName(e.name)}2e,${colorForName(e.name)}0d)"><span class="banner-ribbon">For you</span><div class="banner-icon">${avatarHtml(e.name)}</div><div class="banner-info"><div class="banner-name">${escapeHtml(e.name)}</div><div class="banner-cat">${escapeHtml(e.category)}</div><div class="banner-blurb">${escapeHtml(e.blurb)}</div></div></div>`; }
+
+async function renderHero() {
+  const hero = document.getElementById('hero'); const fentries = FEATURED.map(id=>CATALOG.find(e=>e.id===id)).filter(Boolean);
+  hero.innerHTML = fentries.map((e,i)=>`<div class="hero-slide ${i===0?'active':''}" style="background:linear-gradient(135deg,#222,#1a1a1a)"><div class="hero-content"><h2>${escapeHtml(e.name)}</h2><p>${escapeHtml(e.blurb)}</p><div class="actions" data-install-id="${escapeHtml(e.id)}"></div></div></div>`).join('')+'<button class="hero-nav" id="hero-prev">‹</button><button class="hero-nav" id="hero-next">›</button>'+`<div class="hero-dots">${fentries.map((_,i)=>`<span data-i="${i}" class="${i===0?'active':''}"></span>`).join('')}</div>`;
+  let idx=0; const slides=hero.querySelectorAll('.hero-slide'), dots=hero.querySelectorAll('.hero-dots span');
+  const show = (i) => { idx = (i+slides.length)%slides.length; slides.forEach((s,j)=>s.classList.toggle('active',j===idx)); dots.forEach((d,j)=>d.classList.toggle('active',j===idx)); };
+  hero.querySelector('#hero-prev').addEventListener('click',()=>show(idx-1)); hero.querySelector('#hero-next').addEventListener('click',()=>show(idx+1));
+  dots.forEach(d=>d.addEventListener('click',()=>show(+d.dataset.i)));
+  heroInterval = setInterval(() => { if (currentTab==='home') show(idx+1); }, 6000);
+  fentries.forEach(async(e,i)=>{ const meta = await getMetaCached(catalogApp(e)); if(meta?.screenshots?.[0]) slides[i].style.backgroundImage = `url('${meta.screenshots[0]}')`; });
+}
+
+async function renderHome() {
+  const view = document.getElementById('view-home'); view.dataset.loaded='1'; const cats = [...new Set(CATALOG.map(e=>e.category))];
+  view.innerHTML = `<div id="hero"></div><div id="reco-section"></div>`+cats.map(c=>`<div class="section-title">${escapeHtml(c)}</div><div class="row-scroll" id="row-${c.replace(/[^a-z0-9]/gi,'')}"></div>`).join('');
+  renderHero(); renderRecommendationsInto('reco-section','Recommended for you');
+  cats.forEach(c => { const row = document.getElementById(`row-${c.replace(/[^a-z0-9]/gi,'')}`); if(!row) return; row.innerHTML = CATALOG.filter(e=>e.category===c).map((e,i)=>tileHtml(e,i)).join(''); row.querySelectorAll('.tile').forEach((tile,i)=>{ const entry = CATALOG.filter(e=>e.category===c)[i]; hydrateIcon(catalogApp(entry), tile.querySelector('.tile-icon')); tile.addEventListener('click', () => openModal(catalogApp(entry))); }); });
+}
+renderHome();
+
+// ---------- Grid rendering ----------
+const appRegistry = new Map(); function registerApp(app) { appRegistry.set(app.id, app); return app; }
+function renderInstallControl(container, state) {
+  const id = container.dataset.installId; if(!id) return;
+  if (!state) { if(container.dataset.mode!=='idle'){container.dataset.mode='idle'; container.innerHTML='<button class="install">Install</button>'; container.querySelector('.install').addEventListener('click',e=>{e.stopPropagation(); const app=appRegistry.get(id); if(app) installApp(app,container);});} return; }
+  if (state.done) { const mode=state.success?'done':'retry'; if(container.dataset.mode!==mode){container.dataset.mode=mode; if(state.success){ const canOpen=state.source==='Flatpak'||state.source==='Snap'; container.innerHTML=canOpen?'<button class="install status-open">Open</button>':'<button class="install status-done" disabled>Installed</button>'; if(canOpen) container.querySelector('.install').addEventListener('click',e=>{e.stopPropagation(); window.api.launchApp(appRegistry.get(id));}); } else { container.innerHTML=`<button class="install status-retry" title="${escapeHtml(humanizeError(state.error))}\n\nFull details: ${escapeHtml((state.error||'').slice(0,500))}">Retry</button>`; container.querySelector('.install').addEventListener('click',e=>{e.stopPropagation(); installApp(appRegistry.get(id),container);}); } } return; }
+  const pct=Math.max(1,Math.min(99,Math.round(state.percent||1))); if(container.dataset.mode!=='progress'){container.dataset.mode='progress'; container.innerHTML=`<div class="install-progress"><div class="ip-label"><span class="ip-text"></span><span class="ip-pct"></span></div><div class="progress-track"><div class="progress-fill animated"></div></div></div>`;} container.querySelector('.ip-text').textContent=state.text||'Installing…'; container.querySelector('.ip-pct').textContent=pct+'%'; container.querySelector('.progress-fill').style.width=pct+'%';
+}
+
+function gridCardHtml(app,i) { return `<div class="card" style="animation-delay:${Math.min(i*15,120)}ms"><div class="card-top"><div class="card-icon">${avatarHtml(app.name)}</div><div><h3>${escapeHtml(app.name)}</h3><span class="badge ${badgeClass(app.source)}">${escapeHtml(app.source)}</span></div></div><p>${escapeHtml(app.description||'')}</p><div class="actions" data-install-id="${escapeHtml(app.id)}"></div></div>`; }
+function renderResults(apps, targetId) {
+  const el = document.getElementById(targetId); if(!el) return;
+  let filtered = apps;
+  if (activeSourceFilter !== 'all') {
+    filtered = apps.filter(a => a.source === activeSourceFilter);
+  }
+  filtered = sortResults(filtered);
+  if(!filtered.length){el.innerHTML='<p style="color:#888;text-align:center;padding:40px;">No apps found</p>';return;}
+  el.innerHTML=filtered.map((app,i)=>gridCardHtml(app,i)).join('');
+  el.querySelectorAll('.card').forEach((card,i)=>{
+    const app=filtered[i];
+    registerApp(app);
+    renderInstallControl(card.querySelector('.actions'),downloadsState.get(app.id));
+    card.addEventListener('click',()=>openModal(app));
+    hydrateIcon(app, card.querySelector('.card-icon'));
+  });
+}
+async function installApp(app, container) {
+  registerApp(app);
+  if(container) container.dataset.installId=app.id;
+  onDownloadUpdate(app.id, {name:app.name,source:app.source,percent:1,text:'Starting…',done:false});
+  const result=await window.api.install(app);
+  onDownloadUpdate(app.id, {done:true,success:result.success,error:result.error||null,percent:100,text:result.success?'Installed':(result.error||'Failed')});
+  if(currentTab==='installed') loadInstalled();
+}
+
+// ---------- Installed tab ----------
+let allInstalledApps = [];
+let installedFilterText = '';
+let librariesExpanded = false;
+
+function filterInstalled() {
+  const text = installedFilterText.toLowerCase();
+  const matches = app => !text || app.name.toLowerCase().includes(text) || (app.description||'').toLowerCase().includes(text);
+  const apps = allInstalledApps.filter(app => app.isApp !== false && matches(app));
+  const libraries = allInstalledApps.filter(app => app.isApp === false && matches(app));
+  renderInstalledSection('installed-apps-results', apps, allInstalledApps.length, true);
+  document.getElementById('libraries-toggle-label').textContent = `${librariesExpanded ? '▾' : '▸'} Libraries & System Packages (${libraries.length})`;
+  if (librariesExpanded) {
+    renderInstalledSection('installed-libraries-results', libraries, allInstalledApps.length, false);
+  } else {
+    document.getElementById('installed-libraries-results').innerHTML = '';
+  }
+}
+
+function renderInstalledSection(targetId, apps, totalCount, isAppsSection) {
+  const el = document.getElementById(targetId);
+  if (isAppsSection) {
+    document.getElementById('installed-status').textContent = `${apps.length} applications (${totalCount} total packages)`;
+  }
+  if (!apps.length) {
+    el.innerHTML = `<p style="color:#888;text-align:center;padding:${isAppsSection ? 40 : 20}px;">${isAppsSection ? 'No matching applications' : 'No matching libraries'}</p>`;
+    return;
+  }
+  el.innerHTML = apps.map((app,i) => `<div class="card" style="animation-delay:${Math.min(i*10,100)}ms"><div class="card-top"><div class="card-icon">${avatarHtml(app.name)}</div><div><h3>${escapeHtml(app.name)}</h3><span class="badge ${badgeClass(app.source)}">${escapeHtml(app.source)}</span></div></div><p>${escapeHtml(app.description||'')}</p><div class="actions"><button class="uninstall">Uninstall</button>${app.source!=='Flatpak'?'<button class="purge">Purge</button>':''}</div></div>`).join('');
+  el.querySelectorAll('.card').forEach((card,i) => { const app = apps[i]; card.querySelector('.uninstall').addEventListener('click', e=>{e.stopPropagation();uninstallApp(app,false,e.target);}); const purgeBtn=card.querySelector('.purge'); if(purgeBtn) purgeBtn.addEventListener('click', e=>{e.stopPropagation();uninstallApp(app,true,e.target);}); card.addEventListener('click',()=>openModal(app)); hydrateIcon(app, card.querySelector('.card-icon')); });
+}
+
+async function loadInstalled() {
+  document.getElementById('installed-status').textContent = 'Loading...';
+  allInstalledApps = await window.api.getInstalled();
+  filterInstalled();
+}
+async function uninstallApp(app, purge, btn) { btn.textContent='...'; btn.disabled=true; await window.api.uninstall(app, purge); loadInstalled(); }
+
+document.getElementById('installed-search').addEventListener('input', e => { installedFilterText = e.target.value; filterInstalled(); });
+document.getElementById('libraries-toggle').addEventListener('click', () => { librariesExpanded = !librariesExpanded; filterInstalled(); });
+
+// ---------- Downloads ----------
+function renderDownloads() { const list=document.getElementById('downloads-list'), sub=document.getElementById('downloads-sub'); if(!list||!sub)return; if(!downloadsOrder.length){list.innerHTML='<div class="dl-empty">Nothing installed this session yet.</div>'; sub.textContent=''; return;} sub.textContent=[...downloadsState.values()].filter(d=>!d.done).length?`${[...downloadsState.values()].filter(d=>!d.done).length} in progress`:'All caught up'; downloadsOrder.forEach((id,i)=>{ const s=downloadsState.get(id)||{}; let item=list.querySelector(`.dl-item[data-dl-id="${cssEscape(id)}"]`); if(!item){ item=document.createElement('div'); item.className='dl-item'; item.dataset.dlId=id; item.style.animationDelay=Math.min(i*15,120)+'ms'; item.innerHTML=`<div class="dl-icon">${avatarHtml(s.name||id)}</div><div class="dl-main"><div class="dl-top"><span class="dl-name">${escapeHtml(s.name||id)}</span><span class="dl-pct"></span></div><div class="dl-body"></div></div><div class="dl-actions"></div>`; list.insertBefore(item, list.children[i]||null); hydrateIcon(appRegistry.get(id)||{}, item.querySelector('.dl-icon')); } updateDownloadItem(item, s); }); }
+function updateDownloadItem(item, s) { const pct=Math.max(0,Math.min(100,Math.round(s.percent||0))); const pctEl=item.querySelector('.dl-pct'),bodyEl=item.querySelector('.dl-body'),actionsEl=item.querySelector('.dl-actions'); if(s.done&&s.success){ pctEl.textContent=''; bodyEl.innerHTML=`<div class="dl-text status-done">✓ Installed</div>${s.note?`<div class="dl-text">${escapeHtml(s.note)}</div>`:''}`; const canOpen=s.source==='Flatpak'||s.source==='Snap'; if(canOpen&&!actionsEl.querySelector('.open-btn')){actionsEl.innerHTML='<button class="open-btn">Open</button>'; actionsEl.querySelector('.open-btn').addEventListener('click',()=>window.api.launchApp(appRegistry.get(item.dataset.dlId)));}else if(!canOpen)actionsEl.innerHTML=''; }else if(s.done&&!s.success){ pctEl.textContent=''; bodyEl.innerHTML=`<div class="dl-text status-failed">Failed — ${escapeHtml(humanizeError(s.error))}</div><div class="dl-text" style="opacity:0.6;font-size:10.5px;word-break:break-all;">${escapeHtml((s.error||'').slice(0,500))}</div>`; if(!actionsEl.querySelector('.retry-btn')){actionsEl.innerHTML='<button class="retry-btn">Retry</button>'; actionsEl.querySelector('.retry-btn').addEventListener('click',()=>installApp(appRegistry.get(item.dataset.dlId)));} }else{ pctEl.textContent=pct+'%'; if(!bodyEl.querySelector('.progress-track')){ bodyEl.innerHTML=`<div class="progress-track"><div class="progress-fill animated"></div></div><div class="dl-text"><span class="spin"></span><span class="dl-status-text"></span></div>`; } bodyEl.querySelector('.progress-fill').style.width=Math.max(pct,2)+'%'; bodyEl.querySelector('.dl-status-text').textContent=s.text||'Installing…'; actionsEl.innerHTML=''; } }
+
+// ---------- Modal ----------
+const overlay=document.getElementById('modal-overlay'); document.getElementById('modal-close').addEventListener('click',()=>overlay.classList.remove('open')); overlay.addEventListener('click',e=>{if(e.target===overlay)overlay.classList.remove('open');});
+async function openModal(app) { registerApp(app); overlay.classList.add('open'); document.getElementById('modal-icon').innerHTML=avatarHtml(app.name); document.getElementById('modal-name').textContent=app.name; const badge=document.getElementById('modal-badge'); badge.textContent=app.source; badge.className='badge '+badgeClass(app.source); document.getElementById('modal-desc').textContent=app.description||''; document.getElementById('modal-shots').innerHTML=''; document.getElementById('modal-loading').style.display='block'; const modalActions=document.getElementById('modal-actions'); modalActions.dataset.installId=app.id; renderInstallControl(modalActions, downloadsState.get(app.id)); const meta=await getMetaCached(app); document.getElementById('modal-loading').style.display='none'; if(meta){ hydrateIcon(app, document.getElementById('modal-icon')); if(meta.description)document.getElementById('modal-desc').textContent=meta.description; if(meta.screenshots?.length){ const shots=document.getElementById('modal-shots'); meta.screenshots.forEach(u=>{ const img=document.createElement('img'); img.loading='lazy'; img.onload=()=>img.classList.add('loaded'); img.onerror=()=>img.remove(); img.src=u; shots.appendChild(img); }); } else if(app.source==='System'){ document.getElementById('modal-shots').innerHTML='<span style="color:#777;font-size:12.5px">No preview screenshots for system packages.</span>'; } else { document.getElementById('modal-shots').innerHTML='<span style="color:#777;font-size:12.5px">No screenshots published for this app.</span>'; } } renderInstallControl(modalActions, downloadsState.get(app.id)); }
+</script>
+</body>
+</html>
