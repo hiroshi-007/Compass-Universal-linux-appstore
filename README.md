@@ -2,146 +2,135 @@
 
 **Compass is a universal app store for Linux.**
 
-Instead of using a different software center depending on your Linux distribution, Compass provides a single interface for discovering and installing applications from multiple Linux software sources.
+Compass provides one consistent interface for discovering, installing, managing, and removing applications across multiple Linux software sources.
 
-Whether you're using Debian, Ubuntu, Fedora, Arch, openSUSE, Alpine, or another Linux distribution, Compass aims to give you one consistent app-store experience.
+It supports Debian, Ubuntu, Fedora, Arch, openSUSE, Alpine, and other distributions through their available package managers—alongside Flatpak and Snap where installed.
+
+## ✨ What’s new in v2.5.2
+
+- Faster startup and search through local package caching.
+- Unified search now includes available library packages.
+- Improved installed-package management, including libraries and system packages.
+- More reliable uninstall handling for native packages, Flatpak, and Snap.
+- Better support for multi-architecture packages and Flatpak user/system installations.
+- Detailed install progress, including dependency/package counters.
+- Pause, resume, and cancel controls for supported installations.
+- New cleanup tools for identifying unused apps and clearing selected caches, old temporary files, and package-manager caches.
+- Smoother performance on lower-spec systems through reduced rendering and background work.
 
 ## ✨ Features
 
-* 🌍 **Distro-independent** — designed to work across many Linux distributions
-* 📦 **Multiple package sources** — supports native system package managers alongside Flatpak when available
-* 🔎 **Unified app search** — search across available software sources from one place
-* 🧩 **Source-aware installation** — Compass can use the appropriate package source available on your system
-* 💾 **Caching** — package information is cached locally to make repeated searches faster
-* 🖥️ **Modern interface** — clean, app-store-style graphical interface
-* 🏠 **Home page** — discover applications through categories and featured content
-* 📱 **Installed applications** — view software installed through the supported sources
-* 🐧 **Linux-focused** — built specifically around the way Linux software is distributed
-* **De-bloater** - can uninstall unnecessary apps and libraries if required
+- 🌍 **Distro-independent** — designed for a wide range of Linux distributions.
+- 📦 **Multiple package sources** — supports native package managers, Flatpak, and Snap when available.
+- 🔎 **Unified search** — search applications and libraries from one place.
+- 🧩 **Source-aware installation** — uses the appropriate available source on your system.
+- 💾 **Local caching** — repeated searches and startup are faster.
+- 📊 **Installation progress** — view download and install progress, including dependencies.
+- ⏯️ **Install controls** — pause, resume, or cancel supported installations.
+- 🖥️ **Modern interface** — a clean, app-store-style graphical experience.
+- 🏠 **Home page** — discover featured applications and categories.
+- 📱 **Installed packages** — view and manage installed apps, libraries, and system packages.
+- 🧹 **Cleanup tools** — identify unused applications and clear selected caches safely.
+- 🐧 **Linux-focused** — designed around Linux software distribution systems.
+
+> **Note:** Removing libraries or system packages can affect other software. Compass shows package-manager errors when a package is required by dependencies or protected by the system.
 
 ## 📦 Supported Sources
 
-Compass is designed to bring multiple Linux software ecosystems together, including:
+Compass brings multiple Linux software ecosystems together:
 
-* **Native package managers**
+| Source | Support |
+| --- | --- |
+| APT | ✅ |
+| DNF | ✅ |
+| YUM | ✅ |
+| Pacman | ✅ |
+| Zypper | ✅ |
+| APK | ✅ |
+| XBPS | ✅ |
+| Flatpak | ✅ |
+| Snap | ❌ — Planned for a future update |
 
-  * APT
-  * DNF
-  * YUM
-  * Pacman
-  * Zypper
-  * APK
-  * XBPS
-* **Flatpak**
+Available sources depend on your Linux distribution and which package-management tools are installed.
 
-The available sources depend on what is installed and supported by your Linux system.
+## ✨ What’s new in v2.5.2
 
+- Faster startup and search through local package caching.
+- Unified search now includes available library packages.
+- Improved installed-package management, including libraries and system packages.
+- More reliable uninstall handling for native packages and Flatpak.
+- Better support for multi-architecture packages and Flatpak user/system installations.
+- Detailed install progress, including dependency/package counters.
+- Pause, resume, and cancel controls for supported installations.
+- New cleanup tools for identifying unused apps and clearing selected caches, old temporary files, and package-manager caches.
+- Smoother performance on lower-spec systems through reduced rendering and background work.
 ## 🚀 Installation
 
-Compass is designed to be simple to get running.
+1. Download the latest Compass archive from the repository’s **Releases** page.
+2. Extract the ZIP archive.
+3. Open the extracted folder.
+4. Run `install.sh`, or double-click `Install.desktop` where your desktop environment supports it.
 
-### 1. Download Compass
+The installer detects your Linux environment and installs required dependencies where possible.
 
-Download the latest Compass archive from the **Releases** section of this repository.
-
-### 2. Extract the archive
-
-Extract the downloaded `.tar.gz`/ZIP archive to a location of your choice.
-
-### 3. Launch Compass
-
-Open the extracted folder and run the Compass executable/launcher.
-
-Compass's installer can detect your Linux environment and install the dependencies required by the application.
-
-> **Note:** Some installations may require administrator privileges when installing system dependencies or applications.
+> **Note:** Administrator permission may be requested when Compass installs, removes, or updates system-managed packages.
 
 ## 🖥️ Compatibility
 
-Compass is intended to work across a wide range of Linux distributions.
+Compass detects common package-management systems automatically. Compatibility may vary by distribution, desktop environment, package configuration, available repositories, and installed dependencies.
 
-It currently detects several common package-management systems automatically, including:
-
-| Package system | Support |
-| -------------- | ------- |
-| APT            | ✅       |
-| DNF            | ✅       |
-| YUM            | ✅       |
-| Pacman         | ✅       |
-| Zypper         | ✅       |
-| APK            | ✅       |
-| XBPS           | ✅       |
-| Flatpak        | ✅       |
-| Snap           | ❌       |  Will be Under Development...
-
-Compatibility can vary depending on the distribution, desktop environment, installed dependencies, and package configuration.
+For immutable distributions such as Fedora Silverblue, openSUSE Aeon, or similar systems, native package management may have additional limitations.
 
 ## 🛠️ Built With
 
-Compass is built using:
-
-* **Electron**
-* **JavaScript**
-* **HTML**
-* **CSS**
-* **Node.js**
+- Electron
+- JavaScript
+- HTML
+- CSS
+- Node.js
 
 ## 🎯 Project Goal
 
 Linux has an enormous software ecosystem, but discovering and installing applications can still be confusing for new users.
 
-Different distributions use different package managers, while applications may also be distributed through Flatpak, Snap, AppImages, GitHub releases, and other sources.
-
-Compass aims to make this experience simpler:
+Compass aims to simplify that experience:
 
 > **One store. Multiple sources. Any Linux distro.**
 
-The long-term goal is to make applications easier to discover without requiring users to understand which package manager their distribution uses.
+The long-term goal is to make applications easier to discover and manage without requiring users to understand which package manager their distribution uses.
 
 ## 🔮 Future Plans
 
-Some possible improvements for future versions include:
-
-* Better application metadata
-* More software sources
-* Improved application deduplication
-* Choosing between providers when the same application is available from multiple sources
-* Better application icons
-* AppImage support
-* Improved installed-app detection
-* Application updates
-* Ratings and reviews
-* More accurate application categorization
-* Repository/provider selection
-* Faster search and indexing
-* Improved support for immutable Linux distributions
+- Better application metadata and icons
+- Improved application deduplication
+- Provider selection when an app is available from multiple sources
+- AppImage support
+- Application updates
+- Ratings and reviews
+- More accurate categorization
+- Faster indexing and search
+- Improved support for immutable Linux distributions
 
 ## 🤝 Contributing
 
 Contributions, bug reports, feature requests, and ideas are welcome.
 
-If you find a problem, please open an **Issue** with:
+When reporting an issue, please include:
 
-1. Your Linux distribution
-2. Your desktop environment
-3. The package source involved
-4. What you expected to happen
-5. What actually happened
-6. Any relevant error messages
-
-Pull requests are also welcome.
+1. Linux distribution and version
+2. Desktop environment
+3. Package source involved
+4. Steps to reproduce
+5. Expected and actual behavior
+6. Relevant error messages
 
 ## ⚠️ Development Status
 
-Compass is currently under active development.
-
-Some features may still be experimental, and compatibility can vary between distributions and package sources.
-
-Please report bugs and compatibility issues so they can be investigated.
+Compass is under active development. Some features may be experimental, and compatibility can vary between distributions and package sources.
 
 ## 📄 License
 
-See the repository's `LICENSE` file for the license used by Compass.
+See the repository’s `LICENSE` file.
 
 ---
 
